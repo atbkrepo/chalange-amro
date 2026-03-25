@@ -28,6 +28,7 @@ public class DefaultSecurityConfig {
     @Order(2)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().hasRole("ADMIN"))
@@ -41,6 +42,7 @@ public class DefaultSecurityConfig {
     @Order(3)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .anyRequest().authenticated())

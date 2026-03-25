@@ -122,7 +122,7 @@ services:
     build: ./orders
     container_name: orders-app
     ports:
-      - "8081:8081"
+      - "8080:8080"
     depends_on:
       orders-postgres:
         condition: service_healthy

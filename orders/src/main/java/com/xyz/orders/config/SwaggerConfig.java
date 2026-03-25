@@ -32,6 +32,7 @@ public class SwaggerConfig {
                         .version("1.0.0")
                         .contact(new Contact().name("Orders Team")))
                 .addSecurityItem(new SecurityRequirement().addList("bearer"))
+                .addSecurityItem(new SecurityRequirement().addList("oauth2"))
                 .components(new Components()
                         .addSecuritySchemes("bearer", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)

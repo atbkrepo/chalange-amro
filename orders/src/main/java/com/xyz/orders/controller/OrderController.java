@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -47,13 +48,17 @@ public class OrderController {
         );
 
         OrderResponse response = OrderResponse.from(order);
-
-        this.notificationService.sendOrderConfirmation(
-                request.email(),
-                request.customerName(),
-                order.getId(),
-                order.getTotalAmount()
-        );
+        
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            executor.submit(() ->
+                    this.notificationService.sendOrderConfirmation(
+                            request.email(),
+                            request.customerName(),
+                            order.getId(),
+                            order.getTotalAmount()
+                    )
+            );
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
