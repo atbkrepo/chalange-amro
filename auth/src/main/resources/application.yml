@@ -9,6 +9,6 @@ spring:
     config:
       tls:
         enabled: ${CONFIG_TLS_ENABLED:true}
-        trust-store: ${CONFIG_TLS_TRUST_STORE:file:./ssl/truststore.p12}
+        trust-store: ${CONFIG_TLS_TRUST_STORE:file:../ssl/truststore.p12}
         trust-store-password: ${CONFIG_TLS_TRUST_STORE_PASSWORD:changeit}
         trust-store-type: PKCS12
