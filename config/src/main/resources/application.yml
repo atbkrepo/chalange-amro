@@ -7,6 +7,7 @@ spring:
         git:
           uri: ${SPRING_CLOUD_CONFIG_SERVER_GIT_URI:git@github.com:atbkrepo/config-server.git}
           default-label: ${SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL:main}
+          search-paths: '{application}'
           clone-on-start: true
           ignore-local-ssh-settings: false
           strict-host-key-checking: false

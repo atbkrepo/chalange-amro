@@ -44,20 +44,38 @@ services:
       start_period: 40s
     restart: unless-stopped
 
-  postgres:
+  auth-postgres:
     image: postgres:17
-    container_name: postgres
+    container_name: auth-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_DB}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - auth-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  orders-postgres:
+    image: postgres:17
+    container_name: orders-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ORDERS_POSTGRES_DB}
+      POSTGRES_USER: ${ORDERS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${ORDERS_POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - orders-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ORDERS_POSTGRES_USER} -d ${ORDERS_POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -68,7 +86,7 @@ services:
     ports:
       - "9000:9000"
     depends_on:
-      postgres:
+      auth-postgres:
         condition: service_healthy
       config-server:
         condition: service_healthy
@@ -79,9 +97,9 @@ services:
       CONFIG_TLS_TRUST_STORE: file:/app/ssl/truststore.p12
       CONFIG_TLS_TRUST_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${AUTH_POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
       SERVICE_CLIENT_ID: ${SERVICE_CLIENT_ID}
       SERVICE_CLIENT_SECRET: ${SERVICE_CLIENT_SECRET}
       EXTERNAL_CLIENT_ID: ${EXTERNAL_CLIENT_ID}
@@ -100,5 +118,40 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  orders-app:
+    build: ./orders
+    container_name: orders-app
+    ports:
+      - "8081:8081"
+    depends_on:
+      orders-postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery:
+        condition: service_healthy
+      auth-app:
+        condition: service_healthy
+    environment:
+      CONFIG_SERVER_URL: https://config-server:8888
+      CONFIG_TLS_TRUST_STORE: file:/app/ssl/truststore.p12
+      CONFIG_TLS_TRUST_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://orders-postgres:5432/${ORDERS_POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${ORDERS_POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${ORDERS_POSTGRES_PASSWORD}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: orders-app
+    volumes:
+      - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/v3/api-docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
 volumes:
-  postgres-data:
+  auth-postgres-data:
+  orders-postgres-data:
