@@ -12,3 +12,8 @@ spring:
         trust-store: ${CONFIG_TLS_TRUST_STORE:file:../ssl/truststore.p12}
         trust-store-password: ${CONFIG_TLS_TRUST_STORE_PASSWORD:changeit}
         trust-store-type: PKCS12
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://localhost:9000/oauth2/jwks}

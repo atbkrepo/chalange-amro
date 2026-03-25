@@ -1,0 +1,37 @@
+package com.xyz.orders.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "order_item")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class OrderItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_item_order"))
+    private Order order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_item_product"))
+    private Product product;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer quantity = 1;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal price;
+}

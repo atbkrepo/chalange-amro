@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDM Orders App</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e2e4eb;
+    --muted: #8b8fa3;
+    --accent: #4e9af5;
+    --accent2: #f59e4e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+  header p {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .diagram-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 1100px;
+    width: 100%;
+    overflow-x: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  }
+  .mermaid svg {
+    width: 100%;
+    height: auto;
+  }
+  .legend {
+    margin-top: 1.5rem;
+    max-width: 1100px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.75rem;
+  }
+  .legend-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+  }
+  .legend-card .rel {
+    font-family: 'Space Mono', monospace;
+    color: var(--accent2);
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
+  .legend-card .desc {
+    color: var(--muted);
+  }
+  .legend-card .constraint {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: rgba(78,154,245,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Orders App &mdash; Physical Data Model</h1>
+  <p>schema.sql &bull; 6 tables &bull; 5 foreign keys &bull; 3 unique constraints</p>
+</header>
+<div class="diagram-container">
+  <pre class="mermaid">
+erDiagram
+    product {
+        BIGSERIAL id PK
+        VARCHAR name
+        TEXT description
+        NUMERIC price
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    inventory {
+        BIGSERIAL id PK
+        BIGINT product_id FK
+        INT quantity
+        INT reserved_quantity
+        TIMESTAMP updated_at
+    }
+
+    orders {
+        BIGSERIAL id PK
+        VARCHAR username
+        VARCHAR user_mobile
+        VARCHAR status
+        NUMERIC total_amount
+        TEXT shipping_address
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    order_item {
+        BIGSERIAL id PK
+        BIGINT order_id FK
+        BIGINT product_id FK
+        INT quantity
+        NUMERIC price
+    }
+
+    cart {
+        BIGSERIAL id PK
+        VARCHAR username
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    cart_item {
+        BIGSERIAL id PK
+        BIGINT cart_id FK
+        BIGINT product_id FK
+        INT quantity
+        TIMESTAMP added_at
+    }
+
+    product ||--o| inventory : "has stock"
+    product ||--o{ order_item : "ordered as"
+    product ||--o{ cart_item : "added to"
+    orders ||--|{ order_item : "contains"
+    cart ||--|{ cart_item : "contains"
+  </pre>
+</div>
+<div class="legend">
+  <div class="legend-card">
+    <span class="rel">product &rarr; inventory</span>
+    <span class="desc">1 : 0..1</span>
+    <span class="constraint">uk_inventory_product</span>
+  </div>
+  <div class="legend-card">
+    <span class="rel">product &rarr; order_item</span>
+    <span class="desc">1 : 0..*</span>
+    <span class="constraint">fk_order_item_product</span>
+  </div>
+  <div class="legend-card">
+    <span class="rel">product &rarr; cart_item</span>
+    <span class="desc">1 : 0..*</span>
+    <span class="constraint">fk_cart_item_product</span>
+  </div>
+  <div class="legend-card">
+    <span class="rel">orders &rarr; order_item</span>
+    <span class="desc">1 : 1..*</span>
+    <span class="constraint">fk_order_item_order</span>
+  </div>
+  <div class="legend-card">
+    <span class="rel">cart &rarr; cart_item</span>
+    <span class="desc">1 : 1..*</span>
+    <span class="constraint">fk_cart_item_cart</span>
+  </div>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#1a1d27',
+      primaryColor: '#2a3a5c',
+      primaryTextColor: '#e2e4eb',
+      primaryBorderColor: '#4e9af5',
+      lineColor: '#4e9af5',
+      secondaryColor: '#2a2d3a',
+      tertiaryColor: '#1a1d27'
+    },
+    er: {
+      useMaxWidth: true,
+      layoutDirection: 'LR'
+    }
+  });
+</script>
+</body>
+</html>
