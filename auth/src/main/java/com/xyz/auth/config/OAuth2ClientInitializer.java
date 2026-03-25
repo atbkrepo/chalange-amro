@@ -85,6 +85,7 @@ public class OAuth2ClientInitializer {
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .redirectUri("http://localhost:8080/login/oauth2/code/auth-server")
                 .redirectUri("http://localhost:8080/authorized")
+                .redirectUri("http://localhost:8080/authorized.html")
                 .redirectUri("http://localhost:8080/swagger-ui/oauth2-redirect.html")
                 .postLogoutRedirectUri("http://localhost:8080/logged-out")
                 .scope(OidcScopes.OPENID)

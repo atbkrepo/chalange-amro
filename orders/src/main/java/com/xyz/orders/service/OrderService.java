@@ -86,6 +86,10 @@ public class OrderService {
 
     @Transactional
     public void cancelOrder(Long orderId) {
+        Order order = this.findById(orderId);
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalArgumentException("Only orders in PENDING status can be cancelled");
+        }
         this.updateStatus(orderId, OrderStatus.CANCELLED);
     }
 

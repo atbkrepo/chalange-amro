@@ -22,6 +22,9 @@ public class DefaultSecurityConfig {
             "/swagger-ui.html",
             "/v3/api-docs/**",
             "/v3/api-docs",
+            // Chrome DevTools probes this URL; if it hits form-login, it can overwrite the saved
+            // OAuth2 /oauth2/authorize request and users get redirected here after signing in.
+            "/.well-known/appspecific/**",
     };
 
     @Bean
