@@ -40,7 +40,7 @@ public class SalesAnalyticsService {
         return this.productRepository.findAllProductCatalogRows();
     }
 
-    private List<ProductSalesRow> findTopSellingProductsOfDay(LocalDate day, int limit) {
+    public List<ProductSalesRow> findTopSellingProductsOfDay(LocalDate day, int limit) {
         LocalDateTime startDay = day.atStartOfDay();
         LocalDateTime endDay = day.atTime(LocalTime.MAX);
         return this.orderItemRepository.findTopSellingProductsByDay(
@@ -52,7 +52,7 @@ public class SalesAnalyticsService {
         return this.findTopSellingProductsOfDay(LocalDate.now(), DEFAULT_RANK_LIMIT);
     }
 
-    private List<ProductSalesRow> findLeastSellingProductsOfMonth(YearMonth yearMonth, int limit) {
+    public List<ProductSalesRow> findLeastSellingProductsOfMonth(YearMonth yearMonth, int limit) {
         LocalDateTime monthStart = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime monthEnd = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
         return this.orderItemRepository.findLeastSellingProductsByMonth(

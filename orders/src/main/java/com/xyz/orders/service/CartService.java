@@ -21,9 +21,10 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductService productService;
 
+    @Transactional
     public Cart getOrCreateCart(String username) {
         return this.cartRepository.findByUsername(username)
-                .orElseGet(() -> createCart(username));
+                .orElseGet(() -> this.createCart(username));
     }
 
     public Cart findCartByUsername(String username) {
