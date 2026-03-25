@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:authdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+  cloud:
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+server:
+  port: 0
+
+app:
+  clients:
+    service:
+      client-id: test-service
+      client-secret: test-service-secret
+    external:
+      client-id: test-external
+      client-secret: test-external-secret
+  admin:
+    username: admin
+    password: admin123

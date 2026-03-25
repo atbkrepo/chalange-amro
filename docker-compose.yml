@@ -1,0 +1,104 @@
+services:
+  discovery:
+    build: ./discovery
+    container_name: discovery
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_SECURITY_USER_NAME: ${EUREKA_USER}
+      SPRING_SECURITY_USER_PASSWORD: ${EUREKA_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://${EUREKA_USER}:${EUREKA_PASSWORD}@localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  config-server:
+    build: ./config
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      discovery:
+        condition: service_healthy
+    environment:
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_GIT_URI:-git@github.com:atbkrepo/config-server.git}
+      SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: ${CONFIG_GIT_LABEL:-main}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: config-server
+      SSL_ENABLED: true
+      SSL_KEY_STORE: file:/app/ssl/config-server.p12
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      SSL_KEY_STORE_TYPE: PKCS12
+      SSL_KEY_ALIAS: config-server
+    volumes:
+      - ./config/ssl/config-server.p12:/app/ssl/config-server.p12:ro
+      - ./config/ssh/id_rsa:/root/.ssh/id_rsa:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fk https://localhost:8888/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  auth-app:
+    build: ./auth
+    container_name: auth-app
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery:
+        condition: service_healthy
+    environment:
+      CONFIG_SERVER_URL: https://config-server:8888
+      CONFIG_TLS_TRUST_STORE: file:/app/ssl/truststore.p12
+      CONFIG_TLS_TRUST_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVICE_CLIENT_ID: ${SERVICE_CLIENT_ID}
+      SERVICE_CLIENT_SECRET: ${SERVICE_CLIENT_SECRET}
+      EXTERNAL_CLIENT_ID: ${EXTERNAL_CLIENT_ID}
+      EXTERNAL_CLIENT_SECRET: ${EXTERNAL_CLIENT_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
+      EUREKA_INSTANCE_HOSTNAME: auth-app
+    volumes:
+      - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/v3/api-docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

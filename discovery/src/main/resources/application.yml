@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: discovery
+  security:
+    user:
+      name: ${SPRING_SECURITY_USER_NAME:eureka}
+      password: ${SPRING_SECURITY_USER_PASSWORD:changeme}
+
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${spring.security.user.name}:${spring.security.user.password}@localhost:${server.port}/eureka/
