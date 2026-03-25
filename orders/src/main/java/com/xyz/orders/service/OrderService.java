@@ -1,7 +1,10 @@
 package com.xyz.orders.service;
 
 import com.xyz.orders.exception.ResourceNotFoundException;
-import com.xyz.orders.model.*;
+import com.xyz.orders.model.Order;
+import com.xyz.orders.model.OrderItem;
+import com.xyz.orders.model.OrderStatus;
+import com.xyz.orders.model.Product;
 import com.xyz.orders.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
