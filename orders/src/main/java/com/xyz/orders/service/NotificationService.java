@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,7 @@ public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
-    private final JavaMailSender mailSender;
+    private final MailNotificationSender mailNotificationSender;
 
     @Value("${app.notification.from-email:}")
     private String fromEmail;
@@ -76,7 +75,7 @@ public class NotificationService {
                             Orders Team""",
                     customerName, orderId, totalAmount.toPlainString()));
 
-            this.mailSender.send(message);
+            this.mailNotificationSender.send(message);
             log.info("Order confirmation email sent to {} for order #{}", toEmail, orderId);
         } catch (MailException ex) {
             log.error("Failed to send order confirmation email for order #{}: {}", orderId, ex.getMessage());
