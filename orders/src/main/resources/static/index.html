@@ -188,8 +188,10 @@
 
         .page-header {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
+            gap: .75rem 1rem;
             margin-bottom: 1.25rem;
         }
         .page-header h2 { font-size: 1.25rem; }
@@ -247,6 +249,7 @@
 
         .order-meta { display: flex; gap: 2rem; flex-wrap: wrap; font-size: .85rem; color: var(--muted); margin-bottom: .5rem; }
         .order-items { margin-top: .5rem; }
+        .store-order-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; align-items: center; }
 
         .orders-toolbar {
             display: flex;
@@ -385,6 +388,7 @@
         <a href="#" data-page="cart" data-role-req="shopping"><span class="icon">&#128722;</span> Cart <span id="cart-count"></span></a>
         <a href="#" data-page="place-order" data-role-req="shopping"><span class="icon">&#128221;</span> Place Order</a>
         <a href="#" data-page="orders" data-role-req="shopping"><span class="icon">&#128230;</span> My Orders</a>
+        <a href="#" data-page="stock" data-role-req="store" id="nav-stock" style="display: none;"><span class="icon">&#128666;</span> Store / Stock</a>
         <a href="#" data-page="analytics" data-role-req="analytics" id="nav-analytics" style="display: none;"><span class="icon">&#128200;</span> Analytics</a>
     </nav>
 
@@ -467,6 +471,23 @@
             <div id="orders-list"></div>
         </div>
 
+        <!-- STORE / STOCK (ROLE_STOCK or ROLE_ADMIN — /api/store/orders) -->
+        <div id="page-stock" class="page">
+            <div class="page-header">
+                <h2>Store — all orders</h2>
+                <div class="orders-toolbar">
+                    <div class="field orders-filter-field">
+                        <label for="store-order-id-filter">Order ID</label>
+                        <input type="number" id="store-order-id-filter" min="1" step="1" placeholder="All orders" style="width:120px;">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadStoreOrders()">Load</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="clearStoreOrderIdFilter()">Clear ID</button>
+                </div>
+            </div>
+            <p class="sub" style="margin:-0.75rem 0 1rem;color:var(--muted);font-size:.85rem;">Uses <code>/api/store/orders</code>. Confirm or ship: PENDING→CONFIRMED or SHIPPED; CONFIRMED→SHIPPED. Sign in as <strong>stockclerk</strong> (dev) or ADMIN.</p>
+            <div id="store-orders-list"></div>
+        </div>
+
         <!-- No JWT roles matching any section (shopping vs analytics) -->
         <div id="page-no-access" class="page">
             <div class="page-header">
@@ -476,6 +497,7 @@
                 <p style="margin-bottom:.75rem;">Your token does not include roles needed for this demo. The Orders API expects:</p>
                 <ul style="margin-left:1.25rem;color:var(--muted);font-size:.9rem;line-height:1.6;">
                     <li><strong>USER</strong> or <strong>ADMIN</strong> — catalog, cart, checkout, orders</li>
+                    <li><strong>STOCK</strong> or <strong>ADMIN</strong> — store fulfilment (all orders)</li>
                     <li><strong>MANAGE</strong> or <strong>ADMIN</strong> — analytics</li>
                 </ul>
                 <p style="margin-top:1rem;color:var(--muted);font-size:.88rem;">Sign out and sign in with a user that has the right roles, or check the auth server JWT <code style="font-size:.85em;">roles</code> claim.</p>
@@ -623,6 +645,7 @@ document.querySelectorAll('nav.sidebar a').forEach(link => {
         const req = link.dataset.roleReq;
         if (req === 'shopping' && !hasShoppingRole()) return;
         if (req === 'analytics' && !hasAnalyticsRole()) return;
+        if (req === 'store' && !hasStoreRole()) return;
 
         document.querySelectorAll('nav.sidebar a').forEach(a => a.classList.remove('active'));
         link.classList.add('active');
@@ -633,6 +656,7 @@ document.querySelectorAll('nav.sidebar a').forEach(link => {
         if (page === 'cart') loadCart();
         if (page === 'orders') loadOrders();
         if (page === 'place-order') loadPlaceOrderPanel();
+        if (page === 'stock') loadStoreOrders();
         if (page === 'analytics') showAnalyticsTab('catalog');
     });
 });
@@ -765,6 +789,7 @@ function enterApp(accessToken, idToken) {
         else if (page === 'cart') loadCart();
         else if (page === 'orders') loadOrders();
         else if (page === 'place-order') loadPlaceOrderPanel();
+        else if (page === 'stock') loadStoreOrders();
         else if (page === 'analytics') showAnalyticsTab('catalog');
     }
 }
@@ -851,6 +876,13 @@ function hasAnalyticsRole() {
         || roles.has('MANAGE') || roles.has('ADMIN');
 }
 
+/** Matches StoreOrderController: ROLE_STOCK, ROLE_ADMIN */
+function hasStoreRole() {
+    const roles = jwtRoleSet();
+    return roles.has('ROLE_STOCK') || roles.has('ROLE_ADMIN')
+        || roles.has('STOCK') || roles.has('ADMIN');
+}
+
 function renderRoleBadgesHtml() {
     const roles = [...jwtRoleSet()].sort((a, b) => a.localeCompare(b));
     if (!roles.length) {
@@ -868,12 +900,15 @@ function renderRoleBadgesHtml() {
 function applyRoleBasedUi() {
     const shopping = hasShoppingRole();
     const analytics = hasAnalyticsRole();
+    const store = hasStoreRole();
 
     document.querySelectorAll('nav.sidebar a[data-role-req="shopping"]').forEach(a => {
         a.style.display = shopping ? '' : 'none';
     });
     const navAn = document.getElementById('nav-analytics');
     if (navAn) navAn.style.display = analytics ? '' : 'none';
+    const navStock = document.getElementById('nav-stock');
+    if (navStock) navStock.style.display = store ? '' : 'none';
 
     const badges = document.getElementById('role-badges');
     if (badges) badges.innerHTML = renderRoleBadgesHtml();
@@ -1364,11 +1399,110 @@ async function cancelOrder(orderId) {
 }
 
 /* ===================================================================
+   STORE ORDERS (ROLE_STOCK / ROLE_ADMIN)
+   =================================================================== */
+function storeOrdersQuery() {
+    const raw = document.getElementById('store-order-id-filter')?.value?.trim();
+    if (!raw) return '';
+    const id = parseInt(raw, 10);
+    if (!Number.isFinite(id) || id < 1) return '';
+    return '?orderId=' + encodeURIComponent(String(id));
+}
+
+function clearStoreOrderIdFilter() {
+    const el = document.getElementById('store-order-id-filter');
+    if (el) el.value = '';
+    loadStoreOrders();
+}
+
+async function loadStoreOrders() {
+    const container = document.getElementById('store-orders-list');
+    if (!container) return;
+    container.innerHTML = '<div class="empty-state">Loading...</div>';
+    const q = storeOrdersQuery();
+    const filterRaw = document.getElementById('store-order-id-filter')?.value?.trim();
+
+    try {
+        const orders = await api('/api/store/orders' + q);
+        if (!orders.length) {
+            const msg = filterRaw
+                ? `No order with id <strong>${esc(filterRaw)}</strong>`
+                : 'No orders in the system';
+            container.innerHTML = `<div class="empty-state"><div class="icon">&#128666;</div>${msg}</div>`;
+            return;
+        }
+        container.innerHTML = orders.map(renderStoreOrder).join('');
+    } catch (e) {
+        container.innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+    }
+}
+
+function storeOrderActions(o) {
+    const id = o.orderId;
+    if (o.status === 'PENDING') {
+        return `<div class="order-actions store-order-actions">
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceStoreOrderStatus(${id},'CONFIRMED')">Confirm</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="advanceStoreOrderStatus(${id},'SHIPPED')">Ship (direct)</button>
+        </div>`;
+    }
+    if (o.status === 'CONFIRMED') {
+        return `<div class="order-actions store-order-actions">
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceStoreOrderStatus(${id},'SHIPPED')">Mark shipped</button>
+        </div>`;
+    }
+    return '';
+}
+
+function renderStoreOrder(o) {
+    const itemRows = (o.items || []).map(i => `
+        <tr>
+            <td>${esc(i.productName)}</td>
+            <td>${i.quantity}</td>
+            <td>&euro; ${Number(i.unitPrice).toFixed(2)}</td>
+            <td>&euro; ${Number(i.subtotal).toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <div class="card order-card ${o.status}">
+            <div class="order-header">
+                <span class="order-id">Order #${o.orderId}</span>
+                <span class="badge badge-${o.status}">${o.status}</span>
+            </div>
+            <div class="order-meta">
+                <span><strong>Customer:</strong> ${esc(o.customerName)}</span>
+                <span><strong>Mobile:</strong> ${esc(o.mobileNumber || '-')}</span>
+                <span><strong>Total:</strong> &euro; ${Number(o.totalAmount).toFixed(2)}</span>
+                <span><strong>Date:</strong> ${new Date(o.createdAt).toLocaleString()}</span>
+                ${o.shippingAddress ? `<span><strong>Address:</strong> ${esc(o.shippingAddress)}</span>` : ''}
+            </div>
+            <div class="order-items">
+                <table>
+                    <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+                    <tbody>${itemRows}</tbody>
+                </table>
+            </div>
+            ${storeOrderActions(o)}
+        </div>`;
+}
+
+async function advanceStoreOrderStatus(orderId, status) {
+    try {
+        await api(`/api/store/orders/${orderId}/status?status=${encodeURIComponent(status)}`, { method: 'PATCH' });
+        toast(`Order #${orderId} → ${status}`);
+        loadStoreOrders();
+    } catch (e) {
+        toast('Failed: ' + e.message, 'error');
+    }
+}
+
+/* ===================================================================
    HELPERS
    =================================================================== */
 function navigateTo(page) {
     if (['products', 'cart', 'place-order', 'orders'].includes(page) && !hasShoppingRole()) return;
     if (page === 'analytics' && !hasAnalyticsRole()) return;
+    if (page === 'stock' && !hasStoreRole()) return;
     const link = document.querySelector(`nav.sidebar a[data-page="${page}"]`);
     if (link && getComputedStyle(link).display === 'none') return;
     document.querySelectorAll('nav.sidebar a').forEach(a => {
@@ -1377,6 +1511,7 @@ function navigateTo(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (page === 'orders') loadOrders();
+    if (page === 'stock') loadStoreOrders();
     if (page === 'analytics') showAnalyticsTab('catalog');
 }
 
@@ -1388,6 +1523,10 @@ function esc(str) {
 
 document.getElementById('product-search').addEventListener('keydown', e => {
     if (e.key === 'Enter') loadProducts();
+});
+
+document.getElementById('store-order-id-filter')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadStoreOrders();
 });
 </script>
 </body>

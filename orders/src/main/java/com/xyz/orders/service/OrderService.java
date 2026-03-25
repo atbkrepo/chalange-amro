@@ -7,6 +7,7 @@ import com.xyz.orders.model.OrderStatus;
 import com.xyz.orders.model.Product;
 import com.xyz.orders.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,25 @@ public class OrderService {
 
     public List<Order> findByStatus(OrderStatus status) {
         return this.orderRepository.findByStatus(status);
+    }
+
+    public List<Order> findAllForStore(Long orderId) {
+        if (orderId != null) {
+            return this.orderRepository.findById(orderId).map(List::of).orElseGet(List::of);
+        }
+        return this.orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    @Transactional
+    public Order advanceStoreOrderStatus(Long orderId, OrderStatus target) {
+        if (target != OrderStatus.CONFIRMED && target != OrderStatus.SHIPPED) {
+            throw new IllegalArgumentException("Store may only set status to CONFIRMED or SHIPPED");
+        }
+        Order order = this.findById(orderId);
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot change status of a cancelled order");
+        }
+        return this.updateStatus(orderId, target);
     }
 
     @Transactional
@@ -73,17 +93,7 @@ public class OrderService {
         Order order = this.findById(orderId);
         OrderStatus oldStatus = order.getStatus();
         order.setStatus(newStatus);
-
-        if (newStatus == OrderStatus.CONFIRMED) {
-            for (OrderItem item : order.getItems()) {
-                this.inventoryService.confirmStockDeduction(item.getProduct().getId(), item.getQuantity());
-            }
-        } else if (newStatus == OrderStatus.CANCELLED && oldStatus == OrderStatus.PENDING) {
-            for (OrderItem item : order.getItems()) {
-                this.inventoryService.releaseStock(item.getProduct().getId(), item.getQuantity());
-            }
-        }
-
+        this.confirmInventoryForOrder(order.getItems(), oldStatus, newStatus);
         return this.orderRepository.save(order);
     }
 
@@ -96,5 +106,16 @@ public class OrderService {
         this.updateStatus(orderId, OrderStatus.CANCELLED);
     }
 
-    public record OrderItemRequest(Long productId, int quantity) {}
+    private void confirmInventoryForOrder(List<OrderItem> items, OrderStatus oldStatus, OrderStatus newStatus) {
+        for (OrderItem item : items) {
+            if (newStatus == OrderStatus.CONFIRMED) {
+                this.inventoryService.confirmStockDeduction(item.getProduct().getId(), item.getQuantity());
+            } else if (newStatus == OrderStatus.CANCELLED && oldStatus == OrderStatus.PENDING) {
+                this.inventoryService.releaseStock(item.getProduct().getId(), item.getQuantity());
+            }
+        }
+    }
+
+    public record OrderItemRequest(Long productId, int quantity) {
+    }
 }
