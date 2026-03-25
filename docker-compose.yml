@@ -44,6 +44,13 @@ services:
       start_period: 40s
     restart: unless-stopped
 
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    restart: unless-stopped
+
   auth-postgres:
     image: postgres:17
     container_name: auth-postgres
@@ -86,6 +93,8 @@ services:
     ports:
       - "9000:9000"
     depends_on:
+      zipkin:
+        condition: service_started
       auth-postgres:
         condition: service_healthy
       config-server:
@@ -108,6 +117,7 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: auth-app
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     volumes:
       - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
     healthcheck:
@@ -124,6 +134,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      zipkin:
+        condition: service_started
       orders-postgres:
         condition: service_healthy
       config-server:
@@ -149,6 +161,7 @@ services:
       NOTIFICATION_FROM_EMAIL: ${NOTIFICATION_FROM_EMAIL:-noreply@orders.xyz.com}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: orders-app
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     volumes:
       - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
     healthcheck:
