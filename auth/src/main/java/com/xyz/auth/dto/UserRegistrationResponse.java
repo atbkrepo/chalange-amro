@@ -1,8 +1,8 @@
 package com.xyz.auth.dto;
 
-import java.util.Set;
-
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.Set;
 
 @Schema(description = "Registered user details")
 public record UserRegistrationResponse(

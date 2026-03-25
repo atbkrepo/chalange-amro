@@ -1,8 +1,5 @@
 package com.xyz.auth.config;
 
-import java.time.Duration;
-import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
@@ -21,6 +18,9 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
+
+import java.time.Duration;
+import java.util.UUID;
 
 @Configuration
 @Profile("dev")
