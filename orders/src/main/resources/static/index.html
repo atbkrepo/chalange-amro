@@ -43,10 +43,14 @@
         }
         header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: .3px; }
         #user-badge {
+            position: relative;
+            z-index: 101;
             display: none;
+            flex-wrap: wrap;
             align-items: center;
             gap: .5rem;
             font-size: .85rem;
+            justify-content: flex-end;
         }
         #user-badge .dot { width: 8px; height: 8px; background: #4caf50; border-radius: 50%; }
         #btn-logout {
@@ -59,6 +63,27 @@
             font-size: .8rem;
         }
         #btn-logout:hover { background: rgba(255,255,255,.25); }
+
+        .role-badges {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+            max-width: 220px;
+            justify-content: flex-end;
+        }
+        .role-pill {
+            font-size: .65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.2);
+            border: 1px solid rgba(255,255,255,.35);
+            color: #fff;
+            white-space: nowrap;
+        }
 
         /* ---------- LOGIN ---------- */
         #login-screen {
@@ -222,6 +247,16 @@
 
         .order-meta { display: flex; gap: 2rem; flex-wrap: wrap; font-size: .85rem; color: var(--muted); margin-bottom: .5rem; }
         .order-items { margin-top: .5rem; }
+
+        .orders-toolbar {
+            display: flex;
+            align-items: flex-end;
+            gap: .75rem;
+            flex-wrap: wrap;
+        }
+        .orders-filter-field { margin-bottom: 0; width: auto; }
+        .orders-filter-field label { margin-bottom: .2rem; }
+        .orders-filter-field select { width: auto; min-width: 160px; }
         .order-actions { display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap; }
 
         /* place order form */
@@ -244,6 +279,36 @@
             margin-bottom: 1rem;
         }
         .search-bar input { max-width: 320px; }
+
+        .analytics-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: .75rem;
+        }
+        .analytics-tab {
+            padding: .45rem .85rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            font-size: .82rem;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .analytics-tab:hover { color: var(--text); background: var(--bg); }
+        .analytics-tab.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .analytics-panel { display: none; }
+        .analytics-panel.active { display: block; }
+        .analytics-toolbar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; margin-bottom: 1rem; }
+        .analytics-toolbar .field { margin-bottom: 0; min-width: 140px; }
 
         .toast-container {
             position: fixed;
@@ -292,7 +357,8 @@
     <div id="user-badge">
         <span class="dot"></span>
         <span id="user-label">Authenticated</span>
-        <button id="btn-logout" onclick="logout()">Sign out</button>
+        <span id="role-badges" class="role-badges" aria-label="Your roles"></span>
+        <button type="button" id="btn-logout" onclick="logout()">Sign out</button>
     </div>
 </header>
 
@@ -315,10 +381,11 @@
 <!-- ===================== APP ===================== -->
 <div id="app">
     <nav class="sidebar">
-        <a href="#" data-page="products" class="active"><span class="icon">&#128722;</span> Products</a>
-        <a href="#" data-page="cart"><span class="icon">&#128722;</span> Cart <span id="cart-count"></span></a>
-        <a href="#" data-page="place-order"><span class="icon">&#128221;</span> Place Order</a>
-        <a href="#" data-page="orders"><span class="icon">&#128230;</span> My Orders</a>
+        <a href="#" data-page="products" data-role-req="shopping" class="active"><span class="icon">&#128722;</span> Products</a>
+        <a href="#" data-page="cart" data-role-req="shopping"><span class="icon">&#128722;</span> Cart <span id="cart-count"></span></a>
+        <a href="#" data-page="place-order" data-role-req="shopping"><span class="icon">&#128221;</span> Place Order</a>
+        <a href="#" data-page="orders" data-role-req="shopping"><span class="icon">&#128230;</span> My Orders</a>
+        <a href="#" data-page="analytics" data-role-req="analytics" id="nav-analytics" style="display: none;"><span class="icon">&#128200;</span> Analytics</a>
     </nav>
 
     <main>
@@ -382,9 +449,97 @@
         <div id="page-orders" class="page">
             <div class="page-header">
                 <h2>My Orders</h2>
-                <button class="btn btn-primary btn-sm" onclick="loadOrders()">Refresh</button>
+                <div class="orders-toolbar">
+                    <div class="field orders-filter-field">
+                        <label for="orders-status-filter">Status</label>
+                        <select id="orders-status-filter" onchange="loadOrders()">
+                            <option value="">All statuses</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="CONFIRMED">Confirmed</option>
+                            <option value="SHIPPED">Shipped</option>
+                            <option value="DELIVERED">Delivered</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadOrders()">Refresh</button>
+                </div>
             </div>
             <div id="orders-list"></div>
+        </div>
+
+        <!-- No JWT roles matching any section (shopping vs analytics) -->
+        <div id="page-no-access" class="page">
+            <div class="page-header">
+                <h2>No access</h2>
+            </div>
+            <div class="card" style="max-width:520px;">
+                <p style="margin-bottom:.75rem;">Your token does not include roles needed for this demo. The Orders API expects:</p>
+                <ul style="margin-left:1.25rem;color:var(--muted);font-size:.9rem;line-height:1.6;">
+                    <li><strong>USER</strong> or <strong>ADMIN</strong> — catalog, cart, checkout, orders</li>
+                    <li><strong>MANAGE</strong> or <strong>ADMIN</strong> — analytics</li>
+                </ul>
+                <p style="margin-top:1rem;color:var(--muted);font-size:.88rem;">Sign out and sign in with a user that has the right roles, or check the auth server JWT <code style="font-size:.85em;">roles</code> claim.</p>
+            </div>
+        </div>
+
+        <!-- ANALYTICS (ROLE_MANAGE / ROLE_ADMIN — JWT roles claim) -->
+        <div id="page-analytics" class="page">
+            <div class="page-header">
+                <h2>Analytics</h2>
+                <p class="sub" style="margin:0;color:var(--muted);font-size:.85rem;">Sales and inventory reports (requires MANAGE or ADMIN).</p>
+            </div>
+            <div class="analytics-tabs" id="analytics-tabs">
+                <button type="button" class="analytics-tab active" data-analytics-tab="catalog">Catalog &amp; inventory</button>
+                <button type="button" class="analytics-tab" data-analytics-tab="top-selling">Top selling (day)</button>
+                <button type="button" class="analytics-tab" data-analytics-tab="least-selling">Least selling (month)</button>
+                <button type="button" class="analytics-tab" data-analytics-tab="sales-range">Sales per day</button>
+            </div>
+            <div class="analytics-panel active" data-analytics-panel="catalog">
+                <button class="btn btn-primary btn-sm" style="margin-bottom:1rem;" onclick="loadAnalyticsCatalog()">Refresh</button>
+                <div id="analytics-out-catalog"></div>
+            </div>
+            <div class="analytics-panel" data-analytics-panel="top-selling">
+                <div class="analytics-toolbar">
+                    <div class="field">
+                        <label>Day (yyyy-MM-dd)</label>
+                        <input type="date" id="analytics-top-date">
+                    </div>
+                    <div class="field">
+                        <label>Limit</label>
+                        <input type="number" id="analytics-top-limit" value="5" min="1" max="50" style="width:80px;">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadAnalyticsTopSelling()">Load</button>
+                </div>
+                <div id="analytics-out-top"></div>
+            </div>
+            <div class="analytics-panel" data-analytics-panel="least-selling">
+                <div class="analytics-toolbar">
+                    <div class="field">
+                        <label>Month (yyyy-MM)</label>
+                        <input type="month" id="analytics-least-month">
+                    </div>
+                    <div class="field">
+                        <label>Limit</label>
+                        <input type="number" id="analytics-least-limit" value="5" min="1" max="50" style="width:80px;">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadAnalyticsLeastSelling()">Load</button>
+                </div>
+                <div id="analytics-out-least"></div>
+            </div>
+            <div class="analytics-panel" data-analytics-panel="sales-range">
+                <div class="analytics-toolbar">
+                    <div class="field">
+                        <label>From</label>
+                        <input type="date" id="analytics-sales-from">
+                    </div>
+                    <div class="field">
+                        <label>To</label>
+                        <input type="date" id="analytics-sales-to">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadAnalyticsSalesRange()">Load</button>
+                </div>
+                <div id="analytics-out-sales"></div>
+            </div>
         </div>
     </main>
 </div>
@@ -464,15 +619,21 @@ function toast(msg, type = 'success') {
 document.querySelectorAll('nav.sidebar a').forEach(link => {
     link.addEventListener('click', e => {
         e.preventDefault();
+        const page = link.dataset.page;
+        const req = link.dataset.roleReq;
+        if (req === 'shopping' && !hasShoppingRole()) return;
+        if (req === 'analytics' && !hasAnalyticsRole()) return;
+
         document.querySelectorAll('nav.sidebar a').forEach(a => a.classList.remove('active'));
         link.classList.add('active');
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + link.dataset.page).classList.add('active');
+        document.getElementById('page-' + page).classList.add('active');
 
-        if (link.dataset.page === 'products') loadProducts();
-        if (link.dataset.page === 'cart') loadCart();
-        if (link.dataset.page === 'orders') loadOrders();
-        if (link.dataset.page === 'place-order') loadPlaceOrderPanel();
+        if (page === 'products') loadProducts();
+        if (page === 'cart') loadCart();
+        if (page === 'orders') loadOrders();
+        if (page === 'place-order') loadPlaceOrderPanel();
+        if (page === 'analytics') showAnalyticsTab('catalog');
     });
 });
 
@@ -589,13 +750,50 @@ function enterApp(accessToken, idToken) {
         || 'Authenticated';
     document.getElementById('user-label').textContent = label;
 
-    prefillCustomerNameIfEmpty();
-    loadProducts();
+    applyRoleBasedUi();
+    const navigated = ensureActivePageMatchesRoles();
+    if (hasShoppingRole()) {
+        prefillCustomerNameIfEmpty();
+        updateCartBadge();
+    } else {
+        const cc = document.getElementById('cart-count');
+        if (cc) cc.textContent = '';
+    }
+    if (!navigated) {
+        const page = document.querySelector('nav.sidebar a.active')?.dataset.page;
+        if (page === 'products') loadProducts();
+        else if (page === 'cart') loadCart();
+        else if (page === 'orders') loadOrders();
+        else if (page === 'place-order') loadPlaceOrderPanel();
+        else if (page === 'analytics') showAnalyticsTab('catalog');
+    }
+}
+
+function postLogoutRedirectUri() {
+    return window.location.origin + '/logged-out';
 }
 
 function logout() {
+    const authBase = (AUTH_URL && AUTH_URL.replace(/\/$/, '')) || resolveAuthUrl();
+    const idHint = ID_TOKEN;
+    const clientId = DEMO_OAUTH_CLIENT.clientId;
+    const redirectUri = postLogoutRedirectUri();
+
+    if (idHint && authBase) {
+        ACCESS_TOKEN = '';
+        const params = new URLSearchParams({
+            id_token_hint: idHint,
+            post_logout_redirect_uri: redirectUri,
+            client_id: clientId
+        });
+        window.location.href = authBase + '/connect/logout?' + params.toString();
+        return;
+    }
+
     ACCESS_TOKEN = '';
     ID_TOKEN = '';
+    const badges = document.getElementById('role-badges');
+    if (badges) badges.innerHTML = '';
     document.getElementById('login-screen').style.display = 'block';
     document.getElementById('app').style.display = 'none';
     document.getElementById('user-badge').style.display = 'none';
@@ -626,6 +824,80 @@ function prefillCustomerNameIfEmpty() {
     const name = customerNameFromClaims(ID_TOKEN ? parseJwt(ID_TOKEN) : null)
         || customerNameFromClaims(parseJwt(ACCESS_TOKEN));
     if (name) el.value = name;
+}
+
+/** Roles from JWT {@code roles} claim (access token; optional id token). Matches server {@code ROLE_MANAGE} etc. */
+function jwtRoleSet() {
+    const set = new Set();
+    for (const claims of [parseJwt(ACCESS_TOKEN), ID_TOKEN ? parseJwt(ID_TOKEN) : null].filter(Boolean)) {
+        const r = claims.roles;
+        if (Array.isArray(r)) r.forEach(x => set.add(String(x)));
+        else if (typeof r === 'string') r.split(/[\s,]+/).forEach(x => { if (x) set.add(x); });
+    }
+    return set;
+}
+
+/** Matches {@code @PreAuthorize} on Product/Cart/Order controllers: ROLE_ADMIN, ROLE_USER */
+function hasShoppingRole() {
+    const roles = jwtRoleSet();
+    return roles.has('ROLE_ADMIN') || roles.has('ROLE_USER')
+        || roles.has('ADMIN') || roles.has('USER');
+}
+
+/** Matches AnalyticsController: ROLE_ADMIN, ROLE_MANAGE */
+function hasAnalyticsRole() {
+    const roles = jwtRoleSet();
+    return roles.has('ROLE_MANAGE') || roles.has('ROLE_ADMIN')
+        || roles.has('MANAGE') || roles.has('ADMIN');
+}
+
+function renderRoleBadgesHtml() {
+    const roles = [...jwtRoleSet()].sort((a, b) => a.localeCompare(b));
+    if (!roles.length) {
+        return '<span class="role-pill" title="No roles claim in JWT">No roles</span>';
+    }
+    return roles.map(r => {
+        const short = esc(r.replace(/^ROLE_/i, ''));
+        return `<span class="role-pill" title="${esc(r)}">${short}</span>`;
+    }).join('');
+}
+
+/**
+ * Show/hide nav items to match server-side {@code @PreAuthorize}; refresh role pills in header.
+ */
+function applyRoleBasedUi() {
+    const shopping = hasShoppingRole();
+    const analytics = hasAnalyticsRole();
+
+    document.querySelectorAll('nav.sidebar a[data-role-req="shopping"]').forEach(a => {
+        a.style.display = shopping ? '' : 'none';
+    });
+    const navAn = document.getElementById('nav-analytics');
+    if (navAn) navAn.style.display = analytics ? '' : 'none';
+
+    const badges = document.getElementById('role-badges');
+    if (badges) badges.innerHTML = renderRoleBadgesHtml();
+}
+
+/**
+ * If the current nav selection is hidden for this user's roles, open the first allowed section
+ * or the no-access page.
+ * @returns {boolean} true if navigation was changed (including to no-access)
+ */
+function ensureActivePageMatchesRoles() {
+    const activeLink = document.querySelector('nav.sidebar a.active');
+    if (activeLink && getComputedStyle(activeLink).display !== 'none') {
+        return false;
+    }
+    const first = [...document.querySelectorAll('nav.sidebar a')].find(a => getComputedStyle(a).display !== 'none');
+    if (first) {
+        first.click();
+        return true;
+    }
+    document.querySelectorAll('nav.sidebar a').forEach(a => a.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-no-access').classList.add('active');
+    return true;
 }
 
 /* ===================================================================
@@ -792,6 +1064,151 @@ async function updateCartBadge() {
 }
 
 /* ===================================================================
+   ANALYTICS (MANAGE / ADMIN)
+   =================================================================== */
+function showAnalyticsTab(tab) {
+    document.querySelectorAll('#analytics-tabs .analytics-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.analyticsTab === tab);
+    });
+    document.querySelectorAll('#page-analytics .analytics-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.analyticsPanel === tab);
+    });
+    if (tab === 'sales-range') ensureSalesDatesDefault();
+    if (tab === 'catalog') loadAnalyticsCatalog();
+    else if (tab === 'top-selling') loadAnalyticsTopSelling();
+    else if (tab === 'least-selling') loadAnalyticsLeastSelling();
+    else if (tab === 'sales-range') loadAnalyticsSalesRange();
+}
+
+function ensureSalesDatesDefault() {
+    const fromEl = document.getElementById('analytics-sales-from');
+    const toEl = document.getElementById('analytics-sales-to');
+    if (!fromEl || !toEl) return;
+    if (!fromEl.value || !toEl.value) {
+        const to = new Date();
+        const from = new Date(to);
+        from.setDate(from.getDate() - 7);
+        fromEl.value = from.toISOString().slice(0, 10);
+        toEl.value = to.toISOString().slice(0, 10);
+    }
+}
+
+async function loadAnalyticsCatalog() {
+    const el = document.getElementById('analytics-out-catalog');
+    if (!el) return;
+    el.innerHTML = '<div class="empty-state">Loading...</div>';
+    try {
+        const rows = await api('/api/analytics/products/catalog');
+        if (!rows.length) {
+            el.innerHTML = '<div class="empty-state">No rows</div>';
+            return;
+        }
+        const body = rows.map(r => `<tr>
+            <td>${esc(r.name)}</td>
+            <td>${r.quantityAvailable ?? '-'}</td>
+            <td>&euro; ${Number(r.price).toFixed(2)}</td>
+            <td>${r.lowStock ? '<span style="color:var(--danger)">Low</span>' : 'OK'}</td>
+        </tr>`).join('');
+        el.innerHTML = `<div class="card"><table><thead><tr><th>Product</th><th>Available</th><th>Price</th><th>Stock</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    } catch (e) {
+        el.innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+    }
+}
+
+async function loadAnalyticsTopSelling() {
+    const el = document.getElementById('analytics-out-top');
+    if (!el) return;
+    el.innerHTML = '<div class="empty-state">Loading...</div>';
+    const date = document.getElementById('analytics-top-date')?.value;
+    const limit = document.getElementById('analytics-top-limit')?.value || '5';
+    let q = `?limit=${encodeURIComponent(limit)}`;
+    if (date) q += `&date=${encodeURIComponent(date)}`;
+    try {
+        const rows = await api('/api/analytics/products/top-selling' + q);
+        if (!rows.length) {
+            el.innerHTML = '<div class="empty-state">No sales for this day</div>';
+            return;
+        }
+        const body = rows.map(r => `<tr>
+            <td>${esc(r.productName)}</td>
+            <td>${r.totalQuantitySold}</td>
+            <td>${r.productId}</td>
+        </tr>`).join('');
+        el.innerHTML = `<div class="card"><table><thead><tr><th>Product</th><th>Units sold</th><th>ID</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    } catch (e) {
+        el.innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+    }
+}
+
+async function loadAnalyticsLeastSelling() {
+    const el = document.getElementById('analytics-out-least');
+    if (!el) return;
+    el.innerHTML = '<div class="empty-state">Loading...</div>';
+    const month = document.getElementById('analytics-least-month')?.value;
+    const limit = document.getElementById('analytics-least-limit')?.value || '5';
+    let q = `?limit=${encodeURIComponent(limit)}`;
+    if (month) q += `&month=${encodeURIComponent(month)}`;
+    try {
+        const rows = await api('/api/analytics/products/least-selling' + q);
+        if (!rows.length) {
+            el.innerHTML = '<div class="empty-state">No data for this month</div>';
+            return;
+        }
+        const body = rows.map(r => `<tr>
+            <td>${esc(r.productName)}</td>
+            <td>${r.totalQuantitySold}</td>
+            <td>${r.productId}</td>
+        </tr>`).join('');
+        el.innerHTML = `<div class="card"><table><thead><tr><th>Product</th><th>Units sold</th><th>ID</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    } catch (e) {
+        el.innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+    }
+}
+
+async function loadAnalyticsSalesRange() {
+    const el = document.getElementById('analytics-out-sales');
+    if (!el) return;
+    const from = document.getElementById('analytics-sales-from')?.value;
+    const to = document.getElementById('analytics-sales-to')?.value;
+    if (!from || !to) {
+        toast('Choose from and to dates', 'error');
+        return;
+    }
+    el.innerHTML = '<div class="empty-state">Loading...</div>';
+    const q = `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    try {
+        const rows = await api('/api/analytics/sales/amount-per-day' + q);
+        if (!rows.length) {
+            el.innerHTML = '<div class="empty-state">No sales in range</div>';
+            return;
+        }
+        const body = rows.map(r => `<tr>
+            <td>${esc(formatAnalyticsDay(r.day))}</td>
+            <td>&euro; ${Number(r.totalAmount).toFixed(2)}</td>
+        </tr>`).join('');
+        el.innerHTML = `<div class="card"><table><thead><tr><th>Day</th><th>Total</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    } catch (e) {
+        el.innerHTML = `<div class="empty-state" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+    }
+}
+
+function formatAnalyticsDay(d) {
+    if (d == null) return '';
+    if (typeof d === 'string') return d;
+    if (Array.isArray(d) && d.length >= 3) {
+        return `${d[0]}-${String(d[1]).padStart(2, '0')}-${String(d[2]).padStart(2, '0')}`;
+    }
+    return String(d);
+}
+
+document.getElementById('analytics-tabs')?.addEventListener('click', e => {
+    const btn = e.target.closest('.analytics-tab');
+    if (!btn || !btn.dataset.analyticsTab) return;
+    e.preventDefault();
+    showAnalyticsTab(btn.dataset.analyticsTab);
+});
+
+/* ===================================================================
    PLACE ORDER
    =================================================================== */
 async function loadPlaceOrderPanel() {
@@ -872,14 +1289,25 @@ async function placeOrder() {
 /* ===================================================================
    ORDERS LIST
    =================================================================== */
+function ordersListQuery() {
+    const status = document.getElementById('orders-status-filter')?.value?.trim();
+    if (!status) return '';
+    return '?status=' + encodeURIComponent(status);
+}
+
 async function loadOrders() {
     const container = document.getElementById('orders-list');
     container.innerHTML = '<div class="empty-state">Loading...</div>';
 
+    const status = document.getElementById('orders-status-filter')?.value?.trim();
+
     try {
-        const orders = await api('/api/orders');
+        const orders = await api('/api/orders' + ordersListQuery());
         if (!orders.length) {
-            container.innerHTML = '<div class="empty-state"><div class="icon">&#128230;</div>No orders found</div>';
+            const msg = status
+                ? `No orders with status <strong>${esc(status)}</strong>`
+                : 'No orders found';
+            container.innerHTML = `<div class="empty-state"><div class="icon">&#128230;</div>${msg}</div>`;
             return;
         }
         container.innerHTML = orders.map(renderOrder).join('');
@@ -939,12 +1367,17 @@ async function cancelOrder(orderId) {
    HELPERS
    =================================================================== */
 function navigateTo(page) {
+    if (['products', 'cart', 'place-order', 'orders'].includes(page) && !hasShoppingRole()) return;
+    if (page === 'analytics' && !hasAnalyticsRole()) return;
+    const link = document.querySelector(`nav.sidebar a[data-page="${page}"]`);
+    if (link && getComputedStyle(link).display === 'none') return;
     document.querySelectorAll('nav.sidebar a').forEach(a => {
         a.classList.toggle('active', a.dataset.page === page);
     });
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (page === 'orders') loadOrders();
+    if (page === 'analytics') showAnalyticsTab('catalog');
 }
 
 function esc(str) {

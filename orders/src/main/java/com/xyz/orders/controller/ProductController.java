@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,7 +16,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
-@Tag(name = "Products", description = "Product search and catalog")
+@Tag(name = "Products", description = "Product search and catalog (requires USER or ADMIN roles)")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
 public class ProductController {
 
     private final ProductService productService;

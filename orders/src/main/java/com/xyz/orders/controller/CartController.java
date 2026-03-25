@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
-@Tag(name = "Cart", description = "Shopping cart management")
+@Tag(name = "Cart", description = "Shopping cart management (requires USER or ADMIN roles)")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
 public class CartController {
 
     private final CartService cartService;

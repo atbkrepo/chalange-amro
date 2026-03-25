@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,8 @@ import java.util.concurrent.Executors;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
-@Tag(name = "Orders", description = "Order placement and management")
+@Tag(name = "Orders", description = "Order placement and management (requires USER or ADMIN roles)")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
 public class OrderController {
 
     private final OrderService orderService;

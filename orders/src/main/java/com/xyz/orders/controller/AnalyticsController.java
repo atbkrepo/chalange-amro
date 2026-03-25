@@ -24,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/analytics")
 @RequiredArgsConstructor
-@Tag(name = "Analytics", description = "Sales analytics and inventory catalog")
+@Tag(name = "Analytics", description = "Sales analytics and inventory catalog (requires MANAGE or ADMIN roles)")
 @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGE')")
 public class AnalyticsController {
 

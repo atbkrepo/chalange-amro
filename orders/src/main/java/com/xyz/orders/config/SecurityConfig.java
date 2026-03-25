@@ -36,6 +36,8 @@ public class SecurityConfig {
             "/",
             "/index.html",
             "/authorized.html",
+            "/logged-out",
+            "/logged-out.html",
             "/css/**",
             "/js/**",
             "/favicon.ico",
