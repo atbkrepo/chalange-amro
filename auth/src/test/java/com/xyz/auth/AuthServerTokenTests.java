@@ -1,6 +1,7 @@
 package com.xyz.auth;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,6 +26,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -36,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(AuthServerTestConfiguration.class)
 class AuthServerTokenTests {
 
     @Autowired
@@ -229,7 +233,9 @@ class AuthServerTokenTests {
 
         @BeforeEach
         void grantConsent() {
-            RegisteredClient client = clientRepository.findByClientId(EXTERNAL_CLIENT_ID);
+            RegisteredClient client = Objects.requireNonNull(
+                    clientRepository.findByClientId(EXTERNAL_CLIENT_ID),
+                    "OAuth2 clients must be registered (active profile must include dev)");
             OAuth2AuthorizationConsent consent = OAuth2AuthorizationConsent
                     .withId(client.getId(), ADMIN_USERNAME)
                     .scope("openid").scope("profile").scope("read").scope("write")
@@ -309,7 +315,9 @@ class AuthServerTokenTests {
 
         @BeforeEach
         void grantConsent() {
-            RegisteredClient client = clientRepository.findByClientId(EXTERNAL_CLIENT_ID);
+            RegisteredClient client = Objects.requireNonNull(
+                    clientRepository.findByClientId(EXTERNAL_CLIENT_ID),
+                    "OAuth2 clients must be registered (active profile must include dev)");
             OAuth2AuthorizationConsent consent = OAuth2AuthorizationConsent
                     .withId(client.getId(), ADMIN_USERNAME)
                     .scope("openid").scope("profile").scope("read").scope("write")
@@ -492,15 +500,23 @@ class AuthServerTokenTests {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
     }
 
+    /**
+     * Token responses can include {@code scope} as a string or a JSON array; deserializing the whole body
+     * into {@code Map<String, Object>} fails on Jackson 3+ when lists are present. Read only the fields we need as text.
+     */
     private String tokenField(MvcResult result, String field) throws Exception {
-        Map<String, Object> body = objectMapper.readValue(
-                result.getResponse().getContentAsString(), new TypeReference<>() {});
-        return (String) body.get(field);
+        JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
+        JsonNode node = root.get(field);
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        return node.asText();
     }
 
     private Map<String, Object> decodeJwtPayload(String base64Payload) throws Exception {
         byte[] decoded = Base64.getUrlDecoder().decode(base64Payload);
-        return objectMapper.readValue(decoded, new TypeReference<>() {});
+        JsonNode tree = objectMapper.readTree(decoded);
+        return objectMapper.convertValue(tree, new TypeReference<>() {});
     }
 
     private static String extractQueryParam(String url, String name) {
