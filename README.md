@@ -56,6 +56,16 @@ Detailed material lives under **[docs/](docs/README.md)**:
 - [Configuration reference](docs/configuration-reference.md) — environment variables  
 - [Development](docs/development.md) — build, layout, run order  
 
+## OAuth2 and UI
+
+The application uses OAuth2 authorization/authentication.
+
+- UI: [https://localhost:8080](https://localhost:8080)
+- `user1` / `password1` — role `USER`
+- `user2` / `password2` — role `STOCK`
+- `user3` / `password3` — role `MANAGE`
+- `admin` / `admin` — role `ADMIN`
+
 ## Building without Docker
 
 Each module is a standalone Gradle project:
