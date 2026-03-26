@@ -25,15 +25,15 @@ Compose configures JVM truststore settings through `JAVA_TOOL_OPTIONS` for Java 
 
 ### Default ports (host)
 
-| Service | Port |
-|---------|------|
-| Eureka | 8761 |
-| Config Server | 8888 (HTTPS) |
-| Auth | 9000 |
-| Orders | 8080 |
-| Auth PostgreSQL | 5432 |
-| Orders PostgreSQL | 5433 |
-| Zipkin | 9411 |
+| Service | Port          |
+|---------|---------------|
+| Eureka | 8761 (HTTPS)  |
+| Config Server | 8888 (HTTPS)  |
+| Auth | 9000   (HTTPS)       |
+| Orders | 8080    (HTTPS)      |
+| Auth PostgreSQL | 5432          |
+| Orders PostgreSQL | 5433          |
+| Zipkin | 9411          |
 
 Open **Zipkin** at [http://localhost:9411](http://localhost:9411) to inspect traces from auth and orders.
 
