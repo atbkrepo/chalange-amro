@@ -14,7 +14,7 @@ Spring Boot **4** microservices for **orders** and **OAuth2 authentication**, wi
 ## Quick start (Docker Compose)
 
 1. Copy `.env.example` to `.env` and set **passwords and secrets** (see [docs/configuration-reference.md](docs/configuration-reference.md)). Do not commit `.env`.
-2. Ensure **SSL assets** exist where Compose expects them (`config/ssl/config-server.p12`, `ssl/truststore.p12`, SSH key for config Git if used).
+2. Ensure **SSL assets** exist where Compose expects them (`ssl/keystore.p12`, `ssl/truststore.p12`, SSH key for config Git if used). You can regenerate stores with `ssl/generate-stores.sh`.
 3. From the repository root:
 
 ```bash

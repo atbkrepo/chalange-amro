@@ -59,7 +59,8 @@ Applications trust the config server certificate using:
 - `CONFIG_TLS_ENABLED`
 - `CONFIG_TLS_TRUST_STORE`, `CONFIG_TLS_TRUST_STORE_PASSWORD`
 
-Compose mounts `ssl/truststore.p12` into auth and orders containers.
+Compose mounts shared `ssl/keystore.p12` and `ssl/truststore.p12` into containers.
+Config and orders use the same keystore file with different aliases (`config-server` and `orders` by default).
 
 ## Actuator (orders)
 

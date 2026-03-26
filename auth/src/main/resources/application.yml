@@ -16,6 +16,15 @@ logging:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
   include-application-name: false
 
+server:
+  port: ${SERVER_PORT:9000}
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEY_STORE:file:../ssl/keystore.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:auth}
+
 spring:
   application:
     name: auth
@@ -30,3 +39,11 @@ spring:
         trust-store: ${CONFIG_TLS_TRUST_STORE:file:../ssl/truststore.p12}
         trust-store-password: ${CONFIG_TLS_TRUST_STORE_PASSWORD:changeit}
         trust-store-type: PKCS12
+
+eureka:
+  client:
+    tls:
+      enabled: ${EUREKA_TLS_ENABLED:true}
+      trust-store: ${COMMON_TLS_TRUST_STORE_PATH:file:../ssl/truststore.p12}
+      trust-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+      trust-store-type: PKCS12

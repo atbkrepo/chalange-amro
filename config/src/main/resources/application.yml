@@ -16,13 +16,18 @@ server:
   port: 8888
   ssl:
     enabled: ${SSL_ENABLED:true}
-    key-store: ${SSL_KEY_STORE:file:../ssl/config-server.p12}
+    key-store: ${SSL_KEY_STORE:file:../ssl/keystore.p12}
     key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
     key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
     key-alias: ${SSL_KEY_ALIAS:config-server}
 
 eureka:
   client:
+    tls:
+      enabled: ${EUREKA_TLS_ENABLED:true}
+      trust-store: ${COMMON_TLS_TRUST_STORE_PATH:file:../ssl/truststore.p12}
+      trust-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+      trust-store-type: PKCS12
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://eureka:changeme@localhost:8761/eureka/}
   instance:

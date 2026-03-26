@@ -20,6 +20,8 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 
 import java.time.Duration;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Configuration
@@ -82,11 +84,11 @@ public class OAuth2ClientInitializer {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .redirectUri("http://localhost:8080/login/oauth2/code/auth-server")
-                .redirectUri("http://localhost:8080/authorized")
-                .redirectUri("http://localhost:8080/authorized.html")
-                .redirectUri("http://localhost:8080/swagger-ui/oauth2-redirect.html")
-                .postLogoutRedirectUri("http://localhost:8080/logged-out")
+                .redirectUri("https://localhost:8080/login/oauth2/code/auth-server")
+                .redirectUri("https://localhost:8080/authorized")
+                .redirectUri("https://localhost:8080/authorized.html")
+                .redirectUri("https://localhost:8080/swagger-ui/oauth2-redirect.html")
+                .postLogoutRedirectUri("https://localhost:8080/logged-out")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .scope("read")
@@ -100,7 +102,6 @@ public class OAuth2ClientInitializer {
                         .reuseRefreshTokens(false)
                         .build())
                 .build();
-
         repository.save(externalClient);
         log.info("Registered external app client '{}'", creds.getClientId());
     }

@@ -7,8 +7,16 @@ services:
     environment:
       SPRING_SECURITY_USER_NAME: ${EUREKA_USER}
       SPRING_SECURITY_USER_PASSWORD: ${EUREKA_PASSWORD}
+      SSL_ENABLED: true
+      SSL_KEY_STORE: ${SSL_KEY_STORE_PATH:-file:/app/ssl/keystore.p12}
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      SSL_KEY_STORE_TYPE: PKCS12
+      SSL_KEY_ALIAS: ${SSL_DISCOVERY_KEY_ALIAS:-discovery}
+    volumes:
+      - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
+      - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://${EUREKA_USER}:${EUREKA_PASSWORD}@localhost:8761/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://${EUREKA_USER}:${EUREKA_PASSWORD}@localhost:8761/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -26,15 +34,19 @@ services:
     environment:
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_GIT_URI:-git@github.com:atbkrepo/config-server.git}
       SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: ${CONFIG_GIT_LABEL:-main}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
+      CONFIG_TLS_TRUST_STORE: ${COMMON_TLS_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
+      CONFIG_TLS_TRUST_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      COMMON_TLS_TRUST_STORE_PATH: ${COMMON_TLS_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: config-server
       SSL_ENABLED: true
-      SSL_KEY_STORE: file:/app/ssl/keystore.p12
+      SSL_KEY_STORE: ${SSL_KEY_STORE_PATH:-file:/app/ssl/keystore.p12}
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
-      SSL_KEY_ALIAS: config-server
+      SSL_KEY_ALIAS: ${SSL_CONFIG_KEY_ALIAS:-config-server}
     volumes:
-      - ./config/ssl/keystore.p12:/app/ssl/keystore.p12:ro
+      - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
+      - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
       - ./config/ssh/id_rsa:/root/.ssh/id_rsa:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -fk https://localhost:8888/actuator/health || exit 1"]
@@ -103,8 +115,9 @@ services:
         condition: service_healthy
     environment:
       CONFIG_SERVER_URL: https://config-server:8888
-      CONFIG_TLS_TRUST_STORE: file:/app/ssl/truststore.p12
+      CONFIG_TLS_TRUST_STORE: ${COMMON_TLS_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
       CONFIG_TLS_TRUST_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      COMMON_TLS_TRUST_STORE_PATH: ${COMMON_TLS_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${AUTH_POSTGRES_USER}
@@ -115,13 +128,19 @@ services:
       EXTERNAL_CLIENT_SECRET: ${EXTERNAL_CLIENT_SECRET}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: auth-app
       ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SSL_ENABLED: true
+      SSL_KEY_STORE: ${SSL_KEY_STORE_PATH:-file:/app/ssl/keystore.p12}
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      SSL_KEY_STORE_TYPE: PKCS12
+      SSL_KEY_ALIAS: ${SSL_AUTH_KEY_ALIAS:-auth}
     volumes:
+      - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
       - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:9000/v3/api-docs"]
+      test: ["CMD-SHELL", "curl -fk https://localhost:9000/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -146,32 +165,33 @@ services:
         condition: service_healthy
     environment:
       CONFIG_SERVER_URL: https://config-server:8888
-      CONFIG_TLS_TRUST_STORE: file:/app/ssl/truststore.p12
+      CONFIG_TLS_TRUST_STORE: ${COMMON_TLS_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
       CONFIG_TLS_TRUST_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      COMMON_TLS_TRUST_STORE_PATH: ${COMMON_TLS_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://orders-postgres:5432/${ORDERS_POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${ORDERS_POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${ORDERS_POSTGRES_PASSWORD}
-      AUTH_SERVER_JWK_SET_URI: http://auth-app:9000/oauth2/jwks
+      AUTH_SERVER_JWK_SET_URI: https://auth-app:9000/oauth2/jwks
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       NOTIFICATION_ENABLED: ${NOTIFICATION_ENABLED:-false}
       NOTIFICATION_FROM_EMAIL: ${NOTIFICATION_FROM_EMAIL:-noreply@orders.xyz.com}
-      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: orders-app
       ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
       SSL_ENABLED: true
-      SSL_KEY_STORE: file:/app/ssl/keystore.p12
+      SSL_KEY_STORE: ${SSL_KEY_STORE_PATH:-file:/app/ssl/keystore.p12}
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
-      SSL_KEY_ALIAS: orders
+      SSL_KEY_ALIAS: ${SSL_ORDERS_KEY_ALIAS:-orders}
     volumes:
-      - ./config/ssl/keystore.p12:/app/ssl/keystore.p12:ro
+      - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
       - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8081/v3/api-docs"]
+      test: ["CMD-SHELL", "curl -fk https://localhost:8080/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12

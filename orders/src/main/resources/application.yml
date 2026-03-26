@@ -15,6 +15,15 @@ resilience4j:
       emailSend:
         baseConfig: default
 
+server:
+  port: ${SERVER_PORT:8080}
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEY_STORE:file:../ssl/keystore.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:orders}
+
 management:
   tracing:
     sampling:
@@ -55,7 +64,15 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:http://localhost:9000/oauth2/jwks}
+          jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:https://localhost:9000/oauth2/jwks}
+
+eureka:
+  client:
+    tls:
+      enabled: ${EUREKA_TLS_ENABLED:true}
+      trust-store: ${COMMON_TLS_TRUST_STORE_PATH:file:../ssl/truststore.p12}
+      trust-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+      trust-store-type: PKCS12
 
 ---
 # SQL logging (active when SPRING_PROFILES_ACTIVE includes dev)

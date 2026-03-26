@@ -374,7 +374,7 @@
 
     <div class="field">
         <label>Auth Server URL</label>
-        <input id="oauth-auth-url" value="http://localhost:9000" autocomplete="off">
+        <input id="oauth-auth-url" value="https://localhost:9000" autocomplete="off">
     </div>
     <p class="sub" style="margin:-0.5rem 0 1rem;">Demo OAuth client (id, secret) is hardcoded; login uses authorization code (username/password on the auth server).</p>
 
@@ -579,7 +579,7 @@ let ID_TOKEN = '';
 
 /** Demo-only: confidential client for authorization code + token exchange (dev auth server). */
 const DEMO_OAUTH_CLIENT = {
-    authUrl: 'http://localhost:9000',
+    authUrl: 'https://localhost:9000',
     clientId: 'external-app',
     clientSecret: 'changeme',
     scope: 'openid profile read write'
