@@ -54,25 +54,11 @@ spring:
         enabled: true
         alphanumeric-ids:
           enabled: true
-    config:
-      tls:
-        enabled: ${CONFIG_TLS_ENABLED:true}
-        trust-store: ${CONFIG_TLS_TRUST_STORE:file:../ssl/truststore.p12}
-        trust-store-password: ${CONFIG_TLS_TRUST_STORE_PASSWORD:changeit}
-        trust-store-type: PKCS12
   security:
     oauth2:
       resourceserver:
         jwt:
           jwk-set-uri: ${AUTH_SERVER_JWK_SET_URI:https://localhost:9000/oauth2/jwks}
-
-eureka:
-  client:
-    tls:
-      enabled: ${EUREKA_TLS_ENABLED:true}
-      trust-store: ${COMMON_TLS_TRUST_STORE_PATH:file:../ssl/truststore.p12}
-      trust-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
-      trust-store-type: PKCS12
 
 ---
 # SQL logging (active when SPRING_PROFILES_ACTIVE includes dev)

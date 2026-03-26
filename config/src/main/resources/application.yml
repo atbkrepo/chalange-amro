@@ -20,21 +20,3 @@ server:
     key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
     key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
     key-alias: ${SSL_KEY_ALIAS:config-server}
-
-eureka:
-  client:
-    tls:
-      enabled: ${EUREKA_TLS_ENABLED:true}
-      trust-store: ${COMMON_TLS_TRUST_STORE_PATH:file:../ssl/truststore.p12}
-      trust-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
-      trust-store-type: PKCS12
-    service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://eureka:changeme@localhost:8761/eureka/}
-  instance:
-    hostname: localhost
-    secure-port-enabled: true
-    secure-port: ${server.port}
-    non-secure-port-enabled: false
-    status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
-    health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
-    home-page-url: https://${eureka.instance.hostname}:${server.port}/
