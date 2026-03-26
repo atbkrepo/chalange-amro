@@ -21,6 +21,8 @@ Spring Boot **4** microservices for **orders** and **OAuth2 authentication**, wi
 docker compose up --build
 ```
 
+Compose configures JVM truststore settings through `JAVA_TOOL_OPTIONS` for Java services. The truststore value is a path (`/app/ssl/truststore.p12`) so inter-service HTTPS works during startup (for example, config client calls).
+
 ### Default ports (host)
 
 | Service | Port |
@@ -34,6 +36,8 @@ docker compose up --build
 | Zipkin | 9411 |
 
 Open **Zipkin** at [http://localhost:9411](http://localhost:9411) to inspect traces from auth and orders.
+
+If SMTP health checks fail with PKIX errors in `orders`, set or keep `SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST` aligned with `MAIL_HOST` (Compose default).
 
 ## Technology stack
 

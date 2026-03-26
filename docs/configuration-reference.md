@@ -41,6 +41,7 @@ Set these via a `.env` file in the project root (Compose loads it automatically)
 |----------|---------|
 | `MAIL_HOST`, `MAIL_PORT` | SMTP server |
 | `MAIL_USERNAME`, `MAIL_PASSWORD` | SMTP credentials |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST` | Hostname to trust for SMTP STARTTLS certificate validation (Compose defaults this to `MAIL_HOST`) |
 | `NOTIFICATION_ENABLED` | When `true`, sends order confirmation emails |
 | `NOTIFICATION_FROM_EMAIL` | From address |
 
@@ -61,6 +62,16 @@ Applications trust the config server certificate using:
 
 Compose mounts shared `ssl/keystore.p12` and `ssl/truststore.p12` into containers.
 Config and orders use the same keystore file with different aliases (`config-server` and `orders` by default).
+
+### JVM global truststore (all Java services in Compose)
+
+Compose sets `JAVA_TOOL_OPTIONS` for Java services to enforce JVM-level truststore settings:
+
+- `-Djavax.net.ssl.trustStore=/app/ssl/truststore.p12`
+- `-Djavax.net.ssl.trustStorePassword=${SSL_TRUST_STORE_PASSWORD:-changeit}`
+- `-Djavax.net.ssl.trustStoreType=PKCS12`
+
+Important: `javax.net.ssl.trustStore` must be a filesystem path (for example `/app/ssl/truststore.p12`), not a `file:` URI.
 
 ## Actuator (orders)
 
