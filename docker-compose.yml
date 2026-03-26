@@ -29,12 +29,12 @@ services:
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: config-server
       SSL_ENABLED: true
-      SSL_KEY_STORE: file:/app/ssl/config-server.p12
+      SSL_KEY_STORE: file:/app/ssl/keystore.p12
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
       SSL_KEY_ALIAS: config-server
     volumes:
-      - ./config/ssl/config-server.p12:/app/ssl/config-server.p12:ro
+      - ./config/ssl/keystore.p12:/app/ssl/keystore.p12:ro
       - ./config/ssh/id_rsa:/root/.ssh/id_rsa:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -fk https://localhost:8888/actuator/health || exit 1"]
@@ -162,7 +162,13 @@ services:
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
       EUREKA_INSTANCE_HOSTNAME: orders-app
       ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SSL_ENABLED: true
+      SSL_KEY_STORE: file:/app/ssl/keystore.p12
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
+      SSL_KEY_STORE_TYPE: PKCS12
+      SSL_KEY_ALIAS: orders
     volumes:
+      - ./config/ssl/keystore.p12:/app/ssl/keystore.p12:ro
       - ./ssl/truststore.p12:/app/ssl/truststore.p12:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8081/v3/api-docs"]
