@@ -20,3 +20,8 @@ server:
     key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
     key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
     key-alias: ${SSL_KEY_ALIAS:config-server}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:https://eureka:changeme@localhost:8761/eureka/}

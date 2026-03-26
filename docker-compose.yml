@@ -5,6 +5,10 @@ services:
     ports:
       - "8761:8761"
     environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
+        -Djavax.net.ssl.trustStorePassword=${SSL_TRUST_STORE_PASSWORD:-changeit}
+        -Djavax.net.ssl.trustStoreType=PKCS12
       SPRING_SECURITY_USER_NAME: ${EUREKA_USER}
       SPRING_SECURITY_USER_PASSWORD: ${EUREKA_PASSWORD}
       SSL_ENABLED: true
@@ -12,7 +16,7 @@ services:
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
       SSL_KEY_ALIAS: ${SSL_DISCOVERY_KEY_ALIAS:-discovery}
-      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
+      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
       SSL_TRUST_STORE_PASSWORD: ${SSL_TRUST_STORE_PASSWORD:-changeit}
     volumes:
       - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
@@ -34,6 +38,10 @@ services:
       discovery:
         condition: service_healthy
     environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
+        -Djavax.net.ssl.trustStorePassword=${SSL_TRUST_STORE_PASSWORD:-changeit}
+        -Djavax.net.ssl.trustStoreType=PKCS12
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_GIT_URI:-git@github.com:atbkrepo/config-server.git}
       SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: ${CONFIG_GIT_LABEL:-main}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery:8761/eureka/
@@ -43,7 +51,7 @@ services:
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
       SSL_KEY_ALIAS: ${SSL_CONFIG_KEY_ALIAS:-config-server}
-      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
+      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
       SSL_TRUST_STORE_PASSWORD: ${SSL_TRUST_STORE_PASSWORD:-changeit}
     volumes:
       - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
@@ -115,6 +123,10 @@ services:
       discovery:
         condition: service_healthy
     environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
+        -Djavax.net.ssl.trustStorePassword=${SSL_TRUST_STORE_PASSWORD:-changeit}
+        -Djavax.net.ssl.trustStoreType=PKCS12
       CONFIG_SERVER_URL: https://config-server:8888
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB}
@@ -134,7 +146,7 @@ services:
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
       SSL_KEY_ALIAS: ${SSL_AUTH_KEY_ALIAS:-auth}
-      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
+      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
       SSL_TRUST_STORE_PASSWORD: ${SSL_TRUST_STORE_PASSWORD:-changeit}
     volumes:
       - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
@@ -164,6 +176,10 @@ services:
       auth-app:
         condition: service_healthy
     environment:
+      JAVA_TOOL_OPTIONS: >-
+        -Djavax.net.ssl.trustStore=${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
+        -Djavax.net.ssl.trustStorePassword=${SSL_TRUST_STORE_PASSWORD:-changeit}
+        -Djavax.net.ssl.trustStoreType=PKCS12
       CONFIG_SERVER_URL: https://config-server:8888
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://orders-postgres:5432/${ORDERS_POSTGRES_DB}
@@ -184,7 +200,7 @@ services:
       SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD:-changeit}
       SSL_KEY_STORE_TYPE: PKCS12
       SSL_KEY_ALIAS: ${SSL_ORDERS_KEY_ALIAS:-orders}
-      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-file:/app/ssl/truststore.p12}
+      SSL_TRUST_STORE: ${SSL_TRUST_STORE_PATH:-/app/ssl/truststore.p12}
       SSL_TRUST_STORE_PASSWORD: ${SSL_TRUST_STORE_PASSWORD:-changeit}
     volumes:
       - ./ssl/keystore.p12:/app/ssl/keystore.p12:ro
